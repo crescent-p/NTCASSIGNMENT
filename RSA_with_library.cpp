@@ -1,13 +1,12 @@
 #include <iostream>
 #include <NTL/ZZ.h>
+#include <sstream>
 
 using namespace std;
 using namespace NTL;
 
-using ll = NTL::ZZ;
 
-
-ll generate_prime(int bits) {
+ZZ generate_prime(int bits) {
     ZZ p;
     GenPrime(p, bits);
     return p;
@@ -25,10 +24,7 @@ void generate_rsa_keys(ZZ& n, ZZ& e, ZZ& d, int bits) {
     n = p * q;                       
     ZZ phi_n = (p - 1) * (q - 1);   
 
-    e = ZZ(65537);
-    ZZ k = conv<ZZ>("");
-    double val = ProbPrime(k);
-    std::cout<<"prob"<<val<<endl;                   
+    e = generate_prime(500);                   
     d = mod_inverse(e, phi_n);       
 }
 
@@ -40,6 +36,11 @@ ZZ encrypt(const ZZ& m, const ZZ& e, const ZZ& n) {
 
 ZZ decrypt(const ZZ& c, const ZZ& d, const ZZ& n) {
     return PowerMod(c, d, n); 
+}
+string ZZToString(const ZZ& number) {
+    std::ostringstream oss;
+    oss << number;  // Use ostringstream to handle the conversion
+    return oss.str();
 }
 
 int main() {
@@ -56,19 +57,35 @@ int main() {
 
 
     string message = "";
-    cout<<"Type the message to encrypt: ";
-    cin>>message;
-    string asci_string = "";
+    std::cout<<"Type the message to encrypt: ";
+    std::cin>>message;
+    //padding to keep the leading zeroes. 072 might get converted to 72 without this
+    string asci_string = "111";
     for(int i = 0; i < message.length(); i++){
-        asci_string += to_string(message[i]);
+        string temp = to_string(message[i]);
+        while(temp.length() < 3){
+            temp = '0' + temp;
+        }
+        asci_string += temp;
     }
-    ZZ m = conv<ZZ>(asci_string);
+    ZZ m = conv<ZZ>(asci_string.c_str());
 
     ZZ c = encrypt(m, e, n);
     cout << "Encrypted message (ciphertext): " << c << endl;
 
     ZZ decrypted_message = decrypt(c, d, n);
-    cout << "Decrypted message: " << decrypted_message << endl;
+    
+    string ZZstr = ZZToString(decrypted_message);
+
+
+    string decrypted_decoded = "";
+    for(int i = 3; i < ZZstr.length(); i+=3){
+        char letter = stoi(ZZstr.substr(i, 3));
+        decrypted_decoded += letter;
+    }
+
+
+    cout << "Decrypted message: " << decrypted_decoded << endl;
 
     return 0;
 }

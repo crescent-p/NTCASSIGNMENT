@@ -1,0 +1,4 @@
+# How to Run
+
+
+g++ main.cpp -o example -lntl
